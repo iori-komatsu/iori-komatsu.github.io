@@ -1,0 +1,25 @@
+body {
+    color: #303030;
+    background-color: #E0E0E0;
+
+    max-width: 40em;
+    margin: 3em auto;
+
+    line-height: 180%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 2em;
+}
+
+dt {
+    font-weight: bold;
+}
+
+dd {
+    margin-bottom: 1em;
+}
+
+.site-title {
+    font-size: 250%;
+}
