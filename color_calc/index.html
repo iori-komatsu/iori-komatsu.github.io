@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>色逆算ツール</title>
+    <link rel="stylesheet" type="text/css" href="/css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script>
+      const state = {
+        baseColor: {r: 0, g: 0, b: 0},
+        targetColor: {r: 0, g: 0, b: 0},
+      };
+
+      function hex2color(s) {
+        if (s.startsWith('#')) {
+          s = s.substring(1);
+        }
+        const r = parseInt(s.substring(0, 2), 16) / 255.0;
+        const g = parseInt(s.substring(2, 4), 16) / 255.0;
+        const b = parseInt(s.substring(4, 6), 16) / 255.0;
+        return {r: r, g: g, b: b};
+      }
+
+      function clamp(x) {
+        return Math.max(Math.min(1.0, x), 0.0);
+      }
+
+      function color2hex(c) {
+        const digit = (x) => (clamp(x) * 255.0 + 0.5) | 0;
+        const hex = (x) => digit(x).toString(16).padStart(2, '0').toUpperCase();
+        return hex(c.r) + hex(c.g) + hex(c.b);
+      }
+
+      function color2jsvalue(c) {
+        return '#' + color2hex(c);
+      }
+
+      function mapC2(c1, c2, f) {
+        return {r: f(c1.r, c2.r), g: f(c1.g, c2.g), b: f(c1.b, c2.b)};
+      }
+
+      function mapC3(c1, c2, c3, f) {
+        return {r: f(c1.r, c2.r, c3.r), g: f(c1.g, c2.g, c3.g), b: f(c1.b, c2.b, c3.b)};
+      }
+
+      function updateBaseColor(newColor) {
+        state.baseColor = newColor;
+        render();
+      }
+
+      function updateTargetColor(newColor) {
+        state.targetColor = newColor;
+        render();
+      }
+
+      function render() {
+        // 逆算
+        const resultColor = mapC2(state.baseColor, state.targetColor, (b, t) => b != 0 ? clamp(t / b) : 0)
+        const diff = mapC3(state.baseColor, resultColor, state.targetColor, (b, r, t) => Math.abs(b * r - t));
+        const ok = diff.r + diff.g + diff.b < 1.0/256.0;
+
+        const baseColorPickerEl = document.getElementById("base_color_picker");
+        baseColorPickerEl.value = color2jsvalue(state.baseColor);
+        const baseColorTextEl = document.getElementById("base_color_text");
+        baseColorTextEl.value = color2hex(state.baseColor);
+
+        const targetColorPickerEl = document.getElementById("target_color_picker");
+        targetColorPickerEl.value = color2jsvalue(state.targetColor);
+        const targetColorTextEl = document.getElementById("target_color_text");
+        targetColorTextEl.value = color2hex(state.targetColor);
+
+        const resultColorPickerEl = document.getElementById("result_color_picker");
+        resultColorPickerEl.value = color2jsvalue(resultColor);
+        const resultColorTextEl = document.getElementById("result_color_text");
+        resultColorTextEl.value = ok ? color2hex(resultColor) : "N/A";
+      }
+    </script>
+  </head>
+  <body>
+
+    <h1>色逆算ツール</h1>
+
+    <p>ベースの色に何を乗算したらターゲットの色になるのかを計算します。</p>
+
+    <p>
+      <input type="color" id="base_color_picker" name="base_color_picker" onchange="updateBaseColor(hex2color(this.value))">
+      <input type="text" id="base_color_text" name="base_color_text" onchange="updateBaseColor(hex2color(this.value))">
+      <label for="base_color_picker">ベースの色</label>
+    </p>
+
+    <p>
+      <input type="color" id="target_color_picker" name="target_color_picker" onchange="updateTargetColor(hex2color(this.value))">
+      <input type="text" id="target_color_text" name="target_color_text" onchange="updateTargetColor(hex2color(this.value))">
+      <label for="target_color_picker">ターゲットの色</label>
+    </p>
+
+    <p>&nbsp;</p>
+
+    <p>
+      <input type="color" id="result_color_picker" name="result_color_picker">
+      <input type="text" id="result_color_text" name="result_color_text">
+      <label for="result">答え</label>
+    </p>
+  </body>
+</html>
