@@ -42,37 +42,47 @@ function drawDigits(canvas, ctx, digitsImage, iconImage, inputValue, dryrun) {
     return dx;
 }
 
+function loadImage(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+    });
+}
+
 window.onload = () => {
     const canvas = document.getElementById("canvasDeathCounter");
     const ctx = canvas.getContext("2d");
     const countInput = document.getElementById("inputCount");
     const downloadButton = document.getElementById("downloadButton");
 
-    const digitsImage = new Image();
-    digitsImage.src = "digits.webp";
+    Promise.all([
+        loadImage("digits.webp"),
+        loadImage("icon.webp"),
+    ]).then(([digitsImage, iconImage]) => {
 
-    const iconImage = new Image();
-    iconImage.src = "icon.webp";
+        countInput.addEventListener("input", () => {
+            const inputValue = countInput.value.trim();
+            const w = drawDigits(canvas, ctx, digitsImage, iconImage, inputValue, true);
+            if (w > 0) {
+                countInput.style.color = "";
+                canvas.width = w;
+            } else {
+                // 何らかの理由で描画できない。テキストの文字色を変えてユーザーに伝える。
+                countInput.style.color = "#e9171e";
+            }
+            drawDigits(canvas, ctx, digitsImage, iconImage, inputValue, false);
+        });
 
-    countInput.addEventListener("input", () => {
-        const inputValue = countInput.value.trim();
-        const w = drawDigits(canvas, ctx, digitsImage, iconImage, inputValue, true);
-        if (w > 0) {
-            countInput.style.color = "";
-            canvas.width = w;
-        } else {
-            // 何らかの理由で描画できない。テキストの文字色を変えてユーザーに伝える。
-            countInput.style.color = "#e9171e";
-        }
-        drawDigits(canvas, ctx, digitsImage, iconImage, inputValue, false);
-    })
+        downloadButton.addEventListener("click", () => {
+            const dataUrl = canvas.toDataURL("image/png");
 
-    downloadButton.addEventListener("click", () => {
-        const dataUrl = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = "DC" + countInput.value.trim() + ".png";
+            link.click();
+        });
 
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = "DC" + countInput.value.trim() + ".png";
-        link.click();
-    })
+    }).catch(console.error);
 }
